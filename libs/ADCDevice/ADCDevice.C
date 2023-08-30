@@ -1,5 +1,5 @@
 /**********************************************************************
- * Filename    : ADCDevice.cpp
+ * Filename    : ADCDevice.C
  * Description : Freenove ADC Module library.
  * Author      : www.freenove.com
  * modification: 2020/03/06
@@ -12,7 +12,7 @@ ADCDevice::ADCDevice()
     wiringPiSetup(); // Initialize wiringPi.
 }
 
-int ADCDevice::detectI2C(int addr)
+int ADCDevice::detectI2C(const int addr)
 {
     _fd = wiringPiI2CSetup(addr);
     if (_fd < 0)
@@ -35,13 +35,13 @@ int ADCDevice::detectI2C(int addr)
     }
 }
 
-int ADCDevice::analogRead(int chn)
+int ADCDevice::analogRead(UNU int chn)
 {
     printf("Implemented in subclass! \n");
     return 0;
 }
 
-PCF8591::PCF8591(int addr)
+PCF8591::PCF8591(const int addr)
 {
     address = addr;
     cmd = 0x40; // The default command for PCF8591 is 0x40.
@@ -49,19 +49,19 @@ PCF8591::PCF8591(int addr)
     detectI2C(address);
     printf("PCF8591 setup successful! \n");
 }
-int PCF8591::analogRead(int chn)
+int PCF8591::analogRead(const int chn)
 {
     wiringPiI2CWrite(_fd, cmd + chn);
     wiringPiI2CRead(_fd);
     wiringPiI2CWrite(_fd, cmd + chn);
     return wiringPiI2CRead(_fd);
 }
-int PCF8591::analogWrite(int value)
+int PCF8591::analogWrite(const int value)
 {
     return wiringPiI2CWriteReg8(_fd, cmd, value);
 }
 
-ADS7830::ADS7830(int addr)
+ADS7830::ADS7830(const int addr)
 {
     address = addr;
     cmd = 0x84;
@@ -70,7 +70,7 @@ ADS7830::ADS7830(int addr)
     printf("ADS7830 setup successful! \n");
 }
 
-int ADS7830::analogRead(int chn)
+int ADS7830::analogRead(const int chn)
 {
     wiringPiI2CWrite(_fd, cmd | (((chn << 2 | chn >> 1) & 0x07) << 4));
     return wiringPiI2CRead(_fd);

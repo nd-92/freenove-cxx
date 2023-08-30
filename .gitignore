@@ -1,0 +1,3 @@
+libs/ADCDevice/libADCDevice.so
+libs/ADCDevice/ADCDevice.o
+libs/ADCDevice/rebuild.sh
