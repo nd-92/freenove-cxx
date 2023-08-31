@@ -15,7 +15,7 @@
  *         provided with the distribution.
  *     3.  Neither the name of the owner nor the names of its contributors may be used to endorse
  *         or promote products derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
  * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
@@ -26,7 +26,6 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 
 #include <stdint.h>
 #include <stdio.h>
@@ -40,28 +39,26 @@
 
 #include "dma.h"
 
-
 // DMA address mapping by DMA number index
 static const uint32_t dma_offset[] =
-{
-    DMA0_OFFSET,
-    DMA1_OFFSET,
-    DMA2_OFFSET,
-    DMA3_OFFSET,
-    DMA4_OFFSET,
-    DMA5_OFFSET,
-    DMA6_OFFSET,
-    DMA7_OFFSET,
-    DMA8_OFFSET,
-    DMA9_OFFSET,
-    DMA10_OFFSET,
-    DMA11_OFFSET,
-    DMA12_OFFSET,
-    DMA13_OFFSET,
-    DMA14_OFFSET,
-    DMA15_OFFSET,
+    {
+        DMA0_OFFSET,
+        DMA1_OFFSET,
+        DMA2_OFFSET,
+        DMA3_OFFSET,
+        DMA4_OFFSET,
+        DMA5_OFFSET,
+        DMA6_OFFSET,
+        DMA7_OFFSET,
+        DMA8_OFFSET,
+        DMA9_OFFSET,
+        DMA10_OFFSET,
+        DMA11_OFFSET,
+        DMA12_OFFSET,
+        DMA13_OFFSET,
+        DMA14_OFFSET,
+        DMA15_OFFSET,
 };
-
 
 uint32_t dmanum_to_offset(int dmanum)
 {
@@ -74,5 +71,3 @@ uint32_t dmanum_to_offset(int dmanum)
 
     return dma_offset[dmanum];
 }
-
-
