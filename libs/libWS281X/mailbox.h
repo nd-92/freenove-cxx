@@ -33,17 +33,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEV_MEM "/dev/mem"
 #define DEV_GPIOMEM "/dev/gpiomem"
 
+// Safe
+void *mapmem(const __off_t base, const size_t size, const char *mem_dev);
+
+// Safe
+void *unmapmem(const void *addr, const size_t size);
+
+// Safe
+uint32_t mem_alloc(const int file_desc, const uint32_t size, const uint32_t align, const uint32_t flags);
+
+// Safe
+uint32_t mem_free(const int file_desc, const uint32_t handle);
+
+// Safe
+uint32_t mem_lock(const int file_desc, const uint32_t handle);
+
+// Safe
+uint32_t mem_unlock(const int file_desc, const uint32_t handle);
+
+// Safe
+uint32_t execute_code(const int file_desc, const uint32_t code, const uint32_t r0, const uint32_t r1, const uint32_t r2, const uint32_t r3, const uint32_t r4, const uint32_t r5);
+
+// Safe
+uint32_t qpu_enable(const int file_desc, const uint32_t enable);
+
+// Safe
+uint32_t execute_qpu(const int file_desc, const uint32_t num_qpus, const uint32_t control, const uint32_t noflush, const uint32_t timeout);
+
+// Safe
 int mbox_open(void);
-void mbox_close(int file_desc);
 
-unsigned get_version(int file_desc);
-unsigned mem_alloc(int file_desc, unsigned size, unsigned align, unsigned flags);
-unsigned mem_free(int file_desc, unsigned handle);
-unsigned mem_lock(int file_desc, unsigned handle);
-unsigned mem_unlock(int file_desc, unsigned handle);
-void *mapmem(unsigned base, unsigned size, const char *mem_dev);
-void *unmapmem(void *addr, unsigned size);
-
-unsigned execute_code(int file_desc, unsigned code, unsigned r0, unsigned r1, unsigned r2, unsigned r3, unsigned r4, unsigned r5);
-unsigned execute_qpu(int file_desc, unsigned num_qpus, unsigned control, unsigned noflush, unsigned timeout);
-unsigned qpu_enable(int file_desc, unsigned enable);
+// Safe
+void mbox_close(const int file_desc);

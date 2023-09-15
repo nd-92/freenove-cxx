@@ -60,9 +60,9 @@ static const uint32_t dma_offset[] =
         DMA15_OFFSET,
 };
 
-uint32_t dmanum_to_offset(int dmanum)
+uint32_t dmanum_to_offset(const uint32_t dmanum)
 {
-    int array_size = sizeof(dma_offset) / sizeof(dma_offset[0]);
+    const uint32_t array_size = sizeof(dma_offset) / sizeof(dma_offset[0]);
 
     if (dmanum >= array_size)
     {

@@ -56,6 +56,22 @@
         "laplacian(rho)": "OpenFOAM",
         "pMean": "OpenFOAM",
         "nuTilda_0": "OpenFOAM",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "concepts": "cpp",
+        "cstdio": "cpp",
+        "cwchar": "cpp",
+        "new": "cpp",
+        "typeinfo": "cpp",
+        "cctype": "cpp",
+        "cmath": "cpp",
+        "compare": "cpp",
+        "cstdarg": "cpp",
+        "cstdlib": "cpp",
+        "cwctype": "cpp",
+        "exception": "cpp",
+        "limits": "cpp",
+        "*.tcc": "cpp",
+        "cinttypes": "cpp",
+        "cstdint": "cpp"
     }
 }

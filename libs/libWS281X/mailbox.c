@@ -42,21 +42,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "mailbox.h"
 
-void *mapmem(uint32_t base, uint32_t size, const char *mem_dev)
+void *mapmem(const __off_t base, const size_t size, const char *mem_dev) // Safe
 {
-    uint32_t pagemask = ~0UL ^ (getpagesize() - 1);
-    uint32_t offsetmask = getpagesize() - 1;
-    int mem_fd;
-    void *mem;
+    const __off_t pagemask = static_cast<__off_t>(~0UL) ^ static_cast<__off_t>(getpagesize() - 1);
+    const __off_t offsetmask = static_cast<__off_t>(getpagesize() - 1);
 
-    mem_fd = open(mem_dev, O_RDWR | O_SYNC);
+    const int mem_fd = open(mem_dev, O_RDWR | O_SYNC);
     if (mem_fd < 0)
     {
         perror("Can't open /dev/mem");
         return NULL;
     }
 
-    mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, base & pagemask);
+    const void *mem = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, mem_fd, base & pagemask);
     if (mem == MAP_FAILED)
     {
         perror("mmap error\n");
@@ -68,13 +66,12 @@ void *mapmem(uint32_t base, uint32_t size, const char *mem_dev)
     return (char *)mem + (base & offsetmask);
 }
 
-void *unmapmem(void *addr, uint32_t size)
+void *unmapmem(const void *addr, const size_t size) // Safe
 {
-    uint32_t pagemask = ~0UL ^ (getpagesize() - 1);
-    uintptr_t baseaddr = (uintptr_t)addr & pagemask;
-    int s;
+    uintptr_t pagemask = ~0UL ^ static_cast<uintptr_t>(getpagesize() - 1);
+    uintptr_t baseaddr = reinterpret_cast<uintptr_t>(addr) & pagemask;
 
-    s = munmap((void *)baseaddr, size);
+    const int s = munmap(reinterpret_cast<void *>(baseaddr), size);
     if (s != 0)
     {
         perror("munmap error\n");
@@ -87,7 +84,7 @@ void *unmapmem(void *addr, uint32_t size)
  * use ioctl to send mbox property message
  */
 
-static int mbox_property(int file_desc, void *buf)
+static int mbox_property(const int file_desc, const void *buf) // Safe
 {
     int fd = file_desc;
     int ret_val = -1;
@@ -115,43 +112,43 @@ static int mbox_property(int file_desc, void *buf)
     return ret_val;
 }
 
-uint32_t mem_alloc(int file_desc, uint32_t size, uint32_t align, uint32_t flags)
+uint32_t mem_alloc(const int file_desc, const uint32_t size, const uint32_t align, const uint32_t flags) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x3000c; // (the tag id)
-    p[i++] = 12;      // (size of the buffer)
-    p[i++] = 12;      // (size of the data)
-    p[i++] = size;    // (num bytes? or pages?)
-    p[i++] = align;   // (alignment)
-    p[i++] = flags;   // (MEM_FLAG_L1_NONALLOCATING)
-
+    p[i++] = 0;           // size
+    p[i++] = 0x00000000;  // process request
+    p[i++] = 0x3000c;     // (the tag id)
+    p[i++] = 12;          // (size of the buffer)
+    p[i++] = 12;          // (size of the data)
+    p[i++] = size;        // (num bytes? or pages?)
+    p[i++] = align;       // (alignment)
+    p[i++] = flags;       // (MEM_FLAG_L1_NONALLOCATING)
     p[i++] = 0x00000000;  // end tag
     p[0] = i * sizeof *p; // actual size
 
     if (mbox_property(file_desc, p) < 0)
+    {
         return 0;
+    }
     else
+    {
         return p[5];
+    }
 }
 
-uint32_t mem_free(int file_desc, uint32_t handle)
+uint32_t mem_free(const int file_desc, const uint32_t handle) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x3000f; // (the tag id)
-    p[i++] = 4;       // (size of the buffer)
-    p[i++] = 4;       // (size of the data)
-    p[i++] = handle;
-
+    p[i++] = 0;           // size
+    p[i++] = 0x00000000;  // process request
+    p[i++] = 0x3000f;     // (the tag id)
+    p[i++] = 4;           // (size of the buffer)
+    p[i++] = 4;           // (size of the data)
+    p[i++] = handle;      // handle
     p[i++] = 0x00000000;  // end tag
     p[0] = i * sizeof *p; // actual size
 
@@ -160,41 +157,41 @@ uint32_t mem_free(int file_desc, uint32_t handle)
     return p[5];
 }
 
-uint32_t mem_lock(int file_desc, uint32_t handle)
+uint32_t mem_lock(const int file_desc, const uint32_t handle) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x3000d; // (the tag id)
-    p[i++] = 4;       // (size of the buffer)
-    p[i++] = 4;       // (size of the data)
-    p[i++] = handle;
-
+    p[i++] = 0;           // size
+    p[i++] = 0x00000000;  // process request
+    p[i++] = 0x3000d;     // (the tag id)
+    p[i++] = 4;           // (size of the buffer)
+    p[i++] = 4;           // (size of the data)
+    p[i++] = handle;      // handle
     p[i++] = 0x00000000;  // end tag
     p[0] = i * sizeof *p; // actual size
 
     if (mbox_property(file_desc, p) < 0)
-        return ~0;
+    {
+        return static_cast<uint32_t>(~0);
+    }
     else
+    {
         return p[5];
+    }
 }
 
-uint32_t mem_unlock(int file_desc, uint32_t handle)
+uint32_t mem_unlock(const int file_desc, const uint32_t handle) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x3000e; // (the tag id)
-    p[i++] = 4;       // (size of the buffer)
-    p[i++] = 4;       // (size of the data)
-    p[i++] = handle;
-
+    p[i++] = 0;            // size
+    p[i++] = 0x00000000;   // process request
+    p[i++] = 0x3000e;      // (the tag id)
+    p[i++] = 4;            // (size of the buffer)
+    p[i++] = 4;            // (size of the data)
+    p[i++] = handle;       // handle
     p[i++] = 0x00000000;   // end tag
     p[0] = i * sizeof(*p); // actual size
 
@@ -203,26 +200,23 @@ uint32_t mem_unlock(int file_desc, uint32_t handle)
     return p[5];
 }
 
-uint32_t execute_code(int file_desc, uint32_t code, uint32_t r0, uint32_t r1,
-                      uint32_t r2, uint32_t r3, uint32_t r4, uint32_t r5)
+uint32_t execute_code(const int file_desc, const uint32_t code, const uint32_t r0, const uint32_t r1, const uint32_t r2, const uint32_t r3, const uint32_t r4, const uint32_t r5) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x30010; // (the tag id)
-    p[i++] = 28;      // (size of the buffer)
-    p[i++] = 28;      // (size of the data)
-    p[i++] = code;
-    p[i++] = r0;
-    p[i++] = r1;
-    p[i++] = r2;
-    p[i++] = r3;
-    p[i++] = r4;
-    p[i++] = r5;
-
+    p[i++] = 0;            // size
+    p[i++] = 0x00000000;   // process request
+    p[i++] = 0x30010;      // (the tag id)
+    p[i++] = 28;           // (size of the buffer)
+    p[i++] = 28;           // (size of the data)
+    p[i++] = code;         // code
+    p[i++] = r0;           // r0
+    p[i++] = r1;           // r1
+    p[i++] = r2;           // r2
+    p[i++] = r3;           // r3
+    p[i++] = r4;           // r4
+    p[i++] = r5;           // r5
     p[i++] = 0x00000000;   // end tag
     p[0] = i * sizeof(*p); // actual size
 
@@ -231,19 +225,17 @@ uint32_t execute_code(int file_desc, uint32_t code, uint32_t r0, uint32_t r1,
     return p[5];
 }
 
-uint32_t qpu_enable(int file_desc, uint32_t enable)
+uint32_t qpu_enable(const int file_desc, const uint32_t enable) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-
-    p[i++] = 0x30012; // (the tag id)
-    p[i++] = 4;       // (size of the buffer)
-    p[i++] = 4;       // (size of the data)
-    p[i++] = enable;
-
+    p[i++] = 0;            // size
+    p[i++] = 0x00000000;   // process request
+    p[i++] = 0x30012;      // (the tag id)
+    p[i++] = 4;            // (size of the buffer)
+    p[i++] = 4;            // (size of the data)
+    p[i++] = enable;       // enable
     p[i++] = 0x00000000;   // end tag
     p[0] = i * sizeof(*p); // actual size
 
@@ -252,22 +244,20 @@ uint32_t qpu_enable(int file_desc, uint32_t enable)
     return p[5];
 }
 
-uint32_t execute_qpu(int file_desc, uint32_t num_qpus, uint32_t control,
-                     uint32_t noflush, uint32_t timeout)
+uint32_t execute_qpu(const int file_desc, const uint32_t num_qpus, const uint32_t control, const uint32_t noflush, const uint32_t timeout) // Safe
 {
-    int i = 0;
+    uint32_t i = 0;
     uint32_t p[32];
 
-    p[i++] = 0;          // size
-    p[i++] = 0x00000000; // process request
-    p[i++] = 0x30011;    // (the tag id)
-    p[i++] = 16;         // (size of the buffer)
-    p[i++] = 16;         // (size of the data)
-    p[i++] = num_qpus;
-    p[i++] = control;
-    p[i++] = noflush;
-    p[i++] = timeout; // ms
-
+    p[i++] = 0;            // size
+    p[i++] = 0x00000000;   // process request
+    p[i++] = 0x30011;      // (the tag id)
+    p[i++] = 16;           // (size of the buffer)
+    p[i++] = 16;           // (size of the data)
+    p[i++] = num_qpus;     // num_qpus
+    p[i++] = control;      // control
+    p[i++] = noflush;      // noflush
+    p[i++] = timeout;      // ms
     p[i++] = 0x00000000;   // end tag
     p[0] = i * sizeof(*p); // actual size
 
@@ -276,12 +266,11 @@ uint32_t execute_qpu(int file_desc, uint32_t num_qpus, uint32_t control,
     return p[5];
 }
 
-int mbox_open(void)
+int mbox_open(void) // Safe
 {
-    int file_desc;
     char filename[64];
 
-    file_desc = open("/dev/vcio", 0);
+    int file_desc = open("/dev/vcio", 0);
     if (file_desc >= 0)
     {
         return file_desc;
@@ -307,7 +296,7 @@ int mbox_open(void)
     return file_desc;
 }
 
-void mbox_close(int file_desc)
+void mbox_close(const int file_desc) // Safe
 {
     close(file_desc);
 }

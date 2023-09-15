@@ -37,11 +37,11 @@ void Freenove_WS2812::set_Led_Brightness(rgbIndex brightness)
 
 void Freenove_WS2812::set_Led_Color(unsigned int number, rgbIndex r, rgbIndex g, rgbIndex b)
 {
-    unsigned long color;
+    // unsigned long color;
     r = constrain<rgbIndex>(r, 0, 255);
     g = constrain<rgbIndex>(g, 0, 255);
     b = constrain<rgbIndex>(b, 0, 255);
-    color = (r << 16) | (g << 8) | b;
+    const ws2811_led_t color = (static_cast<ws2811_led_t>(r) << 16) | (static_cast<ws2811_led_t>(g) << 8) | static_cast<ws2811_led_t>(b);
     ledstring.channel[0].leds[number] = color;
 }
 

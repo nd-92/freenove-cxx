@@ -1,38 +1,11 @@
-/*
- * rpihw.c
- *
- * Copyright (c) 2014 Jeremy Garff <jer @ jers.net>
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met:
- *
- *     1.  Redistributions of source code must retain the above copyright notice, this list of
- *         conditions and the following disclaimer.
- *     2.  Redistributions in binary form must reproduce the above copyright notice, this list
- *         of conditions and the following disclaimer in the documentation and/or other materials
- *         provided with the distribution.
- *     3.  Neither the name of the owner nor the names of its contributors may be used to endorse
- *         or promote products derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <byteswap.h>
+
+#include <iostream>
 
 #include "rpihw.h"
 
@@ -495,6 +468,59 @@ const rpi_hw_t *rpi_hw_detect(void)
                 uint32_t hwver = rpi_hw_info[i].hwver;
 
                 // Take out warranty and manufacturer bits
+                hwver &= ~(RPI_WARRANTY_MASK | RPI_MANUFACTURER_MASK);
+                rev &= ~(RPI_WARRANTY_MASK | RPI_MANUFACTURER_MASK);
+
+                if (rev == hwver)
+                {
+                    result = &rpi_hw_info[i];
+                    goto done;
+                }
+            }
+        }
+    }
+
+done:
+    fclose(f);
+
+    return result;
+}
+
+const rpi_hw_t *rpi_hw_detect2(void)
+{
+    const rpi_hw_t *result = NULL;
+    uint32_t rev;
+
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    char line[LINE_WIDTH_MAX];
+
+    if (!f)
+    {
+        return NULL;
+    }
+
+    while (fgets(line, LINE_WIDTH_MAX - 1, f))
+    {
+        if (strstr(line, HW_VER_STRING))
+        {
+            const char *substr = strstr(line, ": ");
+            if (!substr)
+            {
+                continue;
+            }
+
+            errno = 0;
+            rev = strtoul(&substr[1], NULL, 16); // Base 16
+            if (errno)
+            {
+                continue;
+            }
+
+            for (unsigned i = 0; i < (sizeof(rpi_hw_info) / sizeof(rpi_hw_info[0])); i++)
+            {
+                uint32_t hwver = rpi_hw_info[i].hwver;
+
+                // Take out warranty and manufacturer bits
                 hwver &= static_cast<uint32_t>(~(RPI_WARRANTY_MASK | RPI_MANUFACTURER_MASK));
                 rev &= static_cast<uint32_t>(~(RPI_WARRANTY_MASK | RPI_MANUFACTURER_MASK));
 
@@ -511,4 +537,20 @@ done:
     fclose(f);
 
     return result;
+}
+
+int main(void)
+{
+
+    const rpi_hw_t *result = rpi_hw_detect();
+
+    const rpi_hw_t *result2 = rpi_hw_detect2();
+
+    // std::cout << result << std::endl;
+    // std::cout << result2 << std::endl;
+
+    printf("Result 1 = %p\n", result);
+    printf("Result 2 = %p\n", result2);
+
+    return 0;
 }

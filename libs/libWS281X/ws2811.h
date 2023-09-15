@@ -35,6 +35,7 @@ extern "C"
 {
 #endif
 
+#include <stdio.h>
 #include "rpihw.h"
 #include "pwm.h"
 
@@ -86,7 +87,7 @@ extern "C"
         struct ws2811_device *device; //< Private data for driver use
         const rpi_hw_t *rpi_hw;       //< RPI Hardware Information
         uint32_t freq;                //< Required output frequency
-        int dmanum;                   //< DMA number _not_ already in use
+        uint32_t dmanum;              //< DMA number _not_ already in use
         ws2811_channel_t channel[RPI_PWM_CHANNELS];
     } ws2811_t;
 

@@ -59,17 +59,24 @@
 /* 4 colors (R, G, B + W), 8 bits per byte, 3 symbols per bit + 55uS low for reset signal */
 #define LED_COLOURS 4
 #define LED_RESET_uS 55
-#define LED_BIT_COUNT(leds, freq) ((leds * LED_COLOURS * 8 * 3) + ((LED_RESET_uS * \
-                                                                    (freq * 3)) /  \
-                                                                   1000000))
+
+uint32_t LED_BIT_COUNT(const uint32_t leds, const uint32_t freq)
+{
+    return ((leds * LED_COLOURS * 8 * 3) + ((LED_RESET_uS * (freq * 3)) / 1000000));
+}
 
 /* Minimum time to wait for reset to occur in microseconds. */
 #define LED_RESET_WAIT_TIME 300
 
 // Pad out to the nearest uint32 + 32-bits for idle low/high times the number of channels
-#define PWM_BYTE_COUNT(leds, freq) (((((LED_BIT_COUNT(leds, freq) >> 3) & ~0x7) + 4) + 4) * \
-                                    RPI_PWM_CHANNELS)
-#define PCM_BYTE_COUNT(leds, freq) ((((LED_BIT_COUNT(leds, freq) >> 3) & ~0x7) + 4) + 4)
+uint32_t PWM_BYTE_COUNT(const uint32_t leds, const uint32_t freq)
+{
+    return (((((LED_BIT_COUNT(leds, freq) >> 3) & static_cast<uint32_t>(~0x7)) + 4) + 4) * RPI_PWM_CHANNELS);
+}
+uint32_t PCM_BYTE_COUNT(const uint32_t leds, const uint32_t freq)
+{
+    return ((((LED_BIT_COUNT(leds, freq) >> 3) & static_cast<uint32_t>(~0x7)) + 4) + 4);
+}
 
 // Symbol definitions
 #define SYMBOL_HIGH 0x6 // 1 1 0
@@ -94,7 +101,7 @@ typedef struct videocore_mbox
 {
     int handle;         /* From mbox_open() */
     unsigned mem_ref;   /* From mem_alloc() */
-    unsigned bus_addr;  /* From mem_lock() */
+    uint32_t bus_addr;  /* From mem_lock() */
     unsigned size;      /* Size of allocation */
     uint8_t *virt_addr; /* From mapmem() */
 } videocore_mbox_t;
@@ -129,7 +136,7 @@ static uint64_t get_microsecond_timestamp()
         return 0;
     }
 
-    return (uint64_t)t.tv_sec * 1000000 + t.tv_nsec / 1000;
+    return static_cast<uint64_t>(t.tv_sec * 1000000) + static_cast<uint64_t>(t.tv_nsec / 1000);
 }
 
 /**
@@ -177,7 +184,7 @@ static int map_registers(ws2811_t *ws2811)
     }
     dma_addr += rpi_hw->periph_base;
 
-    device->dma = static_cast<dma_t *>(mapmem(dma_addr, sizeof(dma_t), DEV_MEM));
+    device->dma = static_cast<dma_t *>(mapmem(static_cast<off_t>(dma_addr), sizeof(dma_t), DEV_MEM));
     if (!device->dma)
     {
         return -1;
@@ -186,7 +193,7 @@ static int map_registers(ws2811_t *ws2811)
     switch (device->driver_mode)
     {
     case PWM:
-        device->pwm = static_cast<pwm_t *>(mapmem(PWM_OFFSET + base, sizeof(pwm_t), DEV_MEM));
+        device->pwm = static_cast<pwm_t *>(mapmem(static_cast<off_t>(PWM_OFFSET + base), sizeof(pwm_t), DEV_MEM));
         if (!device->pwm)
         {
             return -1;
@@ -194,7 +201,7 @@ static int map_registers(ws2811_t *ws2811)
         break;
 
     case PCM:
-        device->pcm = static_cast<pcm_t *>(mapmem(PCM_OFFSET + base, sizeof(pcm_t), DEV_MEM));
+        device->pcm = static_cast<pcm_t *>(mapmem(static_cast<off_t>(PCM_OFFSET + base), sizeof(pcm_t), DEV_MEM));
         if (!device->pcm)
         {
             return -1;
@@ -207,7 +214,7 @@ static int map_registers(ws2811_t *ws2811)
      * However, it used /dev/mem before, so I'm leaving it as such.
      */
 
-    device->gpio = static_cast<gpio_t *>(mapmem(GPIO_OFFSET + base, sizeof(gpio_t), DEV_MEM));
+    device->gpio = static_cast<gpio_t *>(mapmem(static_cast<off_t>(GPIO_OFFSET + base), sizeof(gpio_t), DEV_MEM));
     if (!device->gpio)
     {
         return -1;
@@ -222,7 +229,7 @@ static int map_registers(ws2811_t *ws2811)
         offset = CM_PCM_OFFSET;
         break;
     }
-    device->cm_clk = static_cast<cm_clk_t *>(mapmem(offset + base, sizeof(cm_clk_t), DEV_MEM));
+    device->cm_clk = static_cast<cm_clk_t *>(mapmem(static_cast<off_t>(offset + base), sizeof(cm_clk_t), DEV_MEM));
     if (!device->cm_clk)
     {
         return -1;
@@ -280,7 +287,7 @@ static uint32_t addr_to_bus(ws2811_device_t *device, const volatile void *virt)
 {
     videocore_mbox_t *mbox = &device->mbox;
 
-    uint32_t offset = (uint8_t *)virt - mbox->virt_addr;
+    uint32_t offset = static_cast<uint32_t>(static_cast<const volatile uint8_t *>(virt) - mbox->virt_addr);
 
     return mbox->bus_addr + offset;
 }
@@ -349,7 +356,7 @@ static int setup_pwm(ws2811_t *ws2811)
     volatile cm_clk_t *cm_clk = device->cm_clk;
     int maxcount = device->max_count;
     uint32_t freq = ws2811->freq;
-    int32_t byte_count;
+    u_long byte_count;
 
     const rpi_hw_t *rpi_hw = ws2811->rpi_hw;
     const uint32_t rpi_type = rpi_hw->type;
@@ -380,10 +387,9 @@ static int setup_pwm(ws2811_t *ws2811)
     usleep(10);
     pwm->ctl = RPI_PWM_CTL_CLRF1;
     usleep(10);
-    pwm->dmac = RPI_PWM_DMAC_ENAB | RPI_PWM_DMAC_PANIC(7) | RPI_PWM_DMAC_DREQ(3);
+    pwm->dmac = RPI_PWM_DMAC_ENAB | pwm->RPI_PWM_DMAC_PANIC(7) | pwm->RPI_PWM_DMAC_DREQ(3);
     usleep(10);
-    pwm->ctl = RPI_PWM_CTL_USEF1 | RPI_PWM_CTL_MODE1 |
-               RPI_PWM_CTL_USEF2 | RPI_PWM_CTL_MODE2;
+    pwm->ctl = RPI_PWM_CTL_USEF1 | RPI_PWM_CTL_MODE1 | RPI_PWM_CTL_USEF2 | RPI_PWM_CTL_MODE2;
     if (ws2811->channel[0].invert)
     {
         pwm->ctl |= RPI_PWM_CTL_POLA1;
@@ -396,7 +402,7 @@ static int setup_pwm(ws2811_t *ws2811)
     pwm->ctl |= RPI_PWM_CTL_PWEN1 | RPI_PWM_CTL_PWEN2;
 
     // Initialize the DMA control block
-    byte_count = PWM_BYTE_COUNT(maxcount, freq);
+    byte_count = PWM_BYTE_COUNT(static_cast<uint32_t>(maxcount), freq);
     dma_cb->ti = RPI_DMA_TI_NO_WIDE_BURSTS | // 32-bit transfers
                  RPI_DMA_TI_WAIT_RESP |      // wait for write complete
                  RPI_DMA_TI_DEST_DREQ |      // user peripheral flow control
@@ -433,7 +439,7 @@ static int setup_pcm(ws2811_t *ws2811)
     // int maxcount = max_channel_led_count(ws2811);
     int maxcount = device->max_count;
     uint32_t freq = ws2811->freq;
-    int32_t byte_count;
+    uint32_t byte_count;
 
     const rpi_hw_t *rpi_hw = ws2811->rpi_hw;
     const uint32_t rpi_type = rpi_hw->type;

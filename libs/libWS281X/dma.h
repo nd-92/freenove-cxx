@@ -117,6 +117,6 @@ typedef struct
 #define PAGE_MASK (~(PAGE_SIZE - 1))
 #define PAGE_OFFSET(page) (page & (PAGE_SIZE - 1))
 
-uint32_t dmanum_to_offset(int dmanum);
+uint32_t dmanum_to_offset(const uint32_t dmanum);
 
 #endif /* __DMA_H__ */

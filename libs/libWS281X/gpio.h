@@ -30,6 +30,8 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#include <stdint.h>
+
 typedef struct
 {
     uint32_t fsel[6]; // GPIO Function Select
@@ -64,23 +66,23 @@ typedef struct
 
 static inline void gpio_function_set(volatile gpio_t *gpio, uint8_t pin, uint8_t function)
 {
-    int regnum = pin / 10;
-    int offset = (pin % 10) * 3;
-    uint8_t funcmap[] = {4, 5, 6, 7, 3, 2}; // See datasheet for mapping
+    const uint32_t regnum = pin / 10;
+    const uint32_t offset = (pin % 10) * 3;
+    const uint32_t funcmap[6] = {4, 5, 6, 7, 3, 2}; // See datasheet for mapping
 
     if (function > 5)
     {
         return;
     }
 
-    gpio->fsel[regnum] &= ~(0x7 << offset);
+    gpio->fsel[regnum] &= static_cast<uint32_t>(~(0x7 << offset));
     gpio->fsel[regnum] |= ((funcmap[function]) << offset);
 }
 
 static inline void gpio_level_set(volatile gpio_t *gpio, uint8_t pin, uint8_t level)
 {
-    int regnum = pin >> 5;
-    int offset = (pin & 0x1f);
+    const uint8_t regnum = static_cast<uint8_t>(pin >> 5);
+    const uint32_t offset = static_cast<uint32_t>(pin & 0x1f);
 
     if (level)
     {
@@ -94,11 +96,11 @@ static inline void gpio_level_set(volatile gpio_t *gpio, uint8_t pin, uint8_t le
 
 static inline void gpio_output_set(volatile gpio_t *gpio, uint8_t pin, uint8_t output)
 {
-    int regnum = pin / 10;
-    int offset = (pin % 10) * 3;
-    uint8_t function = output ? 1 : 0; // See datasheet for mapping
+    const uint32_t regnum = pin / 10;
+    const uint32_t offset = (pin % 10) * 3;
+    const uint32_t function = output ? 1 : 0; // See datasheet for mapping
 
-    gpio->fsel[regnum] &= ~(0x7 << offset);
+    gpio->fsel[regnum] &= static_cast<uint32_t>(~(0x7 << offset));
     gpio->fsel[regnum] |= ((function & 0x7) << offset);
 }
 

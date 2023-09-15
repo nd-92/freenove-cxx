@@ -84,8 +84,17 @@ typedef struct
 #define RPI_PWM_STA_FULL1 (1 << 0)
     uint32_t dmac;
 #define RPI_PWM_DMAC_ENAB (1 << 31)
-#define RPI_PWM_DMAC_PANIC(val) ((val & 0xff) << 8)
-#define RPI_PWM_DMAC_DREQ(val) ((val & 0xff) << 0)
+
+    static uint32_t RPI_PWM_DMAC_PANIC(const uint32_t val)
+    {
+        return ((val & 0xff) << 8);
+    }
+
+    static uint32_t RPI_PWM_DMAC_DREQ(const uint32_t val)
+    {
+        return ((val & 0xff) << 0);
+    }
+
     uint32_t resvd_0x0c;
     uint32_t rng1;
     uint32_t dat1;
